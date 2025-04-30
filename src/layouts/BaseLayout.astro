@@ -11,6 +11,7 @@ const {
   image,
   title = SITE_TITLE,
   description = SITE_DESCRIPTION,
+  keywords,
   includeSidebar = true,
   sideBarActiveItemID,
   ogType,
@@ -20,7 +21,13 @@ const {
 <!doctype html>
 <html lang="en" data-theme="lofi">
   <head>
-    <BaseHead title={title} description={description} image={image} , ogType={ogType} />
+    <BaseHead 
+      title={title}
+      description={description}
+      image={image}
+      ogType={ogType}
+      keywords={keywords}
+    />
     {TRANSITION_API && <ViewTransitions />}
   </head>
   <body>

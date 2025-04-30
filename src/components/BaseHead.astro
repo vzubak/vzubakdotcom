@@ -8,9 +8,10 @@ export interface Props {
 	description: string;
 	image?: string;
 	ogType?: string;
+	keywords?: string;
 }
 
-const { title, description, image = '/social_img.webp', ogType = 'website' } = Astro.props;
+const { title, description, image = '/social_img.webp', ogType = 'website', keywords } = Astro.props;
 ---
 
 <!-- Global Metadata -->
@@ -22,6 +23,7 @@ const { title, description, image = '/social_img.webp', ogType = 'website' } = A
 <!-- Primary Meta Tags -->
 <title>{title}</title>
 <meta name="title" content={title} />
+{keywords && <meta name="keywords" content={keywords} />}
 <meta name="description" content={description} />
 
 <!-- Open Graph / Facebook -->
