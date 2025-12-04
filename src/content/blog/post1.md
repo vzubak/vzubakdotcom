@@ -1,56 +1,94 @@
 ---
-title: "Demo Post 1"
-description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-pubDate: "Sep 10 2022"
+title: "Creating Your Own DNS-Level Ad-Blocker"
+description: "A weekend project that turned my €20 Xiaomi 4A into a silent ad-killing machine"
+pubDate: "Sep 10 2025"
 heroImage: "/post_img.webp"
-tags: ["tokio"]
+tags: ["adblocker, dns, dnsmasq,"]
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Vitae ultricies leo integer
-malesuada nunc vel risus commodo viverra. Adipiscing enim eu turpis egestas
-pretium. Euismod elementum nisi quis eleifend quam adipiscing. In hac habitasse
-platea dictumst vestibulum. Sagittis purus sit amet volutpat. Netus et malesuada
-fames ac turpis egestas. Eget magna fermentum iaculis eu non diam phasellus
-vestibulum lorem. Varius sit amet mattis vulputate enim. Habitasse platea
-dictumst quisque sagittis. Integer quis auctor elit sed vulputate mi. Dictumst
-quisque sagittis purus sit amet.
+I build ads for a living. I love good ads. I keep those relevant, non- intrusive and safe.
+This is not just about blocking ads- its about making our Internet connection safer.
 
-Morbi tristique senectus et netus. Id semper risus in hendrerit gravida rutrum
-quisque non tellus. Habitasse platea dictumst quisque sagittis purus sit amet.
-Tellus molestie nunc non blandit massa. Cursus vitae congue mauris rhoncus.
-Accumsan tortor posuere ac ut. Fringilla urna porttitor rhoncus dolor. Elit
-ullamcorper dignissim cras tincidunt lobortis. In cursus turpis massa tincidunt
-dui ut ornare lectus. Integer feugiat scelerisque varius morbi enim nunc.
-Bibendum neque egestas congue quisque egestas diam. Cras ornare arcu dui vivamus
-arcu felis bibendum. Dignissim suspendisse in est ante in nibh mauris. Sed
-tempus urna et pharetra pharetra massa massa ultricies mi.
+A dusty Xiaomi Mi Router 4A Gigabit was lying in a drawer. One Google search later I discovered it can run OpenWrt, the open-source firmware that turns cheap consumer routers into professional tool worth 10x more.
 
-Mollis nunc sed id semper risus in. Convallis a cras semper auctor neque. Diam
-sit amet nisl suscipit. Lacus viverra vitae congue eu consequat ac felis donec.
-Egestas integer eget aliquet nibh praesent tristique magna sit amet. Eget magna
-fermentum iaculis eu non diam. In vitae turpis massa sed elementum. Tristique et
-egestas quis ipsum suspendisse ultrices. Eget lorem dolor sed viverra ipsum. Vel
-turpis nunc eget lorem dolor sed viverra. Posuere ac ut consequat semper viverra
-nam. Laoreet suspendisse interdum consectetur libero id faucibus. Diam phasellus
-vestibulum lorem sed risus ultricies tristique. Rhoncus dolor purus non enim
-praesent elementum facilisis. Ultrices tincidunt arcu non sodales neque. Tempus
-egestas sed sed risus pretium quam vulputate. Viverra suspendisse potenti nullam
-ac tortor vitae purus faucibus ornare. Fringilla urna porttitor rhoncus dolor
-purus non. Amet dictum sit amet justo donec enim.
+I flashed it, set it up as a wireless repeater (it grabs internet from my main router over Wi-Fi and re-broadcasts a cleaner version), and then did the thing I’m actually proud of:
 
-Mattis ullamcorper velit sed ullamcorper morbi tincidunt. Tortor posuere ac ut
-consequat semper viverra. Tellus mauris a diam maecenas sed enim ut sem viverra.
-Venenatis urna cursus eget nunc scelerisque viverra mauris in. Arcu ac tortor
-dignissim convallis aenean et tortor at. Curabitur gravida arcu ac tortor
-dignissim convallis aenean et tortor. Egestas tellus rutrum tellus pellentesque
-eu. Fusce ut placerat orci nulla pellentesque dignissim enim sit amet. Ut enim
-blandit volutpat maecenas volutpat blandit aliquam etiam. Id donec ultrices
-tincidunt arcu. Id cursus metus aliquam eleifend mi.
+I built my own dns-level ad blocker that lives entirely inside the router.
 
-Tempus quam pellentesque nec nam aliquam sem. Risus at ultrices mi tempus
-imperdiet. Id porta nibh venenatis cras sed felis eget velit. Ipsum a arcu
-cursus vitae. Facilisis magna etiam tempor orci eu lobortis elementum. Tincidunt
-dui ut ornare lectus sit. Quisque non tellus orci ac. Blandit libero volutpat
-sed cras. Nec tincidunt praesent semper feugiat nibh sed pulvinar proin gravida.
-Egestas integer eget aliquet nibh praesent tristique magna.
+No browser extensions.  
+No Pi-hole box.  
+No subscription.
+
+Just dnsmasq + one tiny blocklist + two lines of cron.
+
+Here’s exactly what I ended up with (copy-paste ready if you ever want the same).
+It's really important to use conf-dir=/etc/dnsmasq.d/ dnsmasq deamon sometimes hangs on this setup wihtout it. Even if you dont have any config there its important to keep that line.
+
+
+### /etc/dnsmasq.conf – the brain
+
+```conf
+interface=br-lan
+bind-interfaces
+dhcp-range=192.168.2.100,192.168.2.249,255.255.255.0,24h
+dhcp-leasefile=/tmp/dhcp.leases
+dhcp-option=3,192.168.2.1
+dhcp-option=6,192.168.2.1           # clients ask the router for DNS
+server=94.140.14.14                # upstream = AdGuard1 (privacy + malware protection)
+server=94.140.15.15                # upstream = AdGuard2 (privacy + malware protection)
+cache-size=10000
+min-cache-ttl=1800
+conf-dir=/etc/dnsmasq.d/,*.conf     # magic line – loads our blocklist
+log-queries                         # optional, but fun to watch
+log-dhcp
+```
+
+### The blocklist – 90 000 domains, 2.8 MB, updates itself
+
+```bash
+# One-time instant activation
+wget -q -O /etc/dnsmasq.d/99-custom-blocklist.conf https://small.oisd.nl/dnsmasq2
+
+# Daily refresh at 3:05 AM (adds itself only once)
+grep -q "oisd.nl" /etc/crontabs/root || \
+    echo "5 3 * * * wget -q -O /etc/dnsmasq.d/99-custom-blocklist.conf https://small.oisd.nl/dnsmasq2 && /etc/init.d/dnsmasq restart" >> /etc/crontabs/root
+
+/etc/init.d/dnsmasq restart
+```
+
+That’s it. Seriously.
+
+
+
+### What actually happens now
+
+Every phone, tablet, laptop, smart TV — anything that connects to this router — gets:
+
+1. Local instant block of ~90 000 ad/tracker domains (0 ms latency)  
+2. Everything else resolved by AdGuard DNS (malware, phishing, telemetry protection)  
+3. A fat DNS cache so YouTube and Instagram open like they’re installed locally
+
+Run this and watch the carnage live:
+
+```bash
+logread -f | grep dnsmasq
+```
+
+You’ll see hundreds of lines per minute of ads dying with `NXDOMAIN` before they even leave your house.
+
+![dnsmasq in action](/images/dnsmasq.webp)
+
+
+### The feeling
+
+The first time I opened YouTube on my phone and there was… nothing. No pre-roll. No banner. No “skip in 5…4…”. Just the video.
+
+That quiet is addictive.
+
+And the whole thing runs on a ten-dollar router that idles at 3 watts.
+
+Sometimes the best software isn’t an app.  
+Sometimes it’s just one config file and a cron job at 3:05 AM.
+
+If you have an old router gathering dust, give it a weekend.  
+You’ll never look at the internet the same way again.
