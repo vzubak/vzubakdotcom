@@ -9,6 +9,8 @@ tags: ["adblocker, dns, dnsmasq,"]
 I build ads for a living. I love good ads. I keep those relevant, non- intrusive and safe.
 This is not just about blocking ads- its about making our Internet connection safer.
 
+![ads are annoying](/images/ads%are%annoying.webp)
+
 A dusty Xiaomi Mi Router 4A Gigabit was lying in a drawer. One Google search later I discovered it can run OpenWrt, the open-source firmware that turns cheap consumer routers into professional tool worth 10x more.
 
 I flashed it, set it up as a wireless repeater (it grabs internet from my main router over Wi-Fi and re-broadcasts a cleaner version), and then did the thing I’m actually proud of:
