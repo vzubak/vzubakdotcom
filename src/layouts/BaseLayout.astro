@@ -8,62 +8,90 @@ import { ViewTransitions } from "astro:transitions";
 import { SITE_TITLE, SITE_DESCRIPTION, TRANSITION_API } from "../config";
 
 const {
-  image,
-  title = SITE_TITLE,
-  description = SITE_DESCRIPTION,
-  keywords,
-  includeSidebar = true,
-  sideBarActiveItemID,
-  ogType,
+  image,
+  title = SITE_TITLE,
+  description = SITE_DESCRIPTION,
+  keywords,
+  includeSidebar = true,
+  sideBarActiveItemID,
+  ogType,
 } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" data-theme="lofi">
-  <head>
-    <BaseHead 
-      title={title}
-      description={description}
-      image={image}
-      ogType={ogType}
-      keywords={keywords}
-    />
-    {TRANSITION_API && <ViewTransitions />}
-  </head>
-  <body>
-    <div class="bg-base-100 drawer lg:drawer-open">
-      <input id="my-drawer" type="checkbox" class="drawer-toggle" />
-      <div class="drawer-content bg-base-100">
-        <Header title={SITE_TITLE} />
-        <div class="md:flex md:justify-center">
-          <main class="p-6 pt-10 lg:max-w-[900px] max-w-[100vw]">
-            <slot />
-          </main>
-        </div>
-        <Footer />
-      </div>
-      {includeSidebar && <SideBar sideBarActiveItemID={sideBarActiveItemID} />}
-    </div>
+<html lang="en"> 
+  <head>
+    <BaseHead 
+      title={title}
+      description={description}
+      image={image}
+      ogType={ogType}
+      keywords={keywords}
+    />
+    {TRANSITION_API && <ViewTransitions />}
+
+        <script is:inline>
+        const html = document.documentElement;
+        
+        // Load saved theme (defaulting to 'lofi')
+        const saved = localStorage.getItem("theme") || "lofi";
+        html.setAttribute("data-theme", saved);
+    </script>
+  </head>
+  <body>
+    <div class="bg-base-100 drawer lg:drawer-open">
+      <input id="my-drawer" type="checkbox" class="drawer-toggle" />
+      <div class="drawer-content bg-base-100">
+        <Header title={SITE_TITLE} />
+        <div class="md:flex md:justify-center">
+          <main class="p-6 pt-10 lg:max-w-[900px] max-w-[100vw]">
+            <slot />
+          </main>
+        </div>
+        <Footer />
+      </div>
+      {includeSidebar && <SideBar sideBarActiveItemID={sideBarActiveItemID} />}
+    </div>
+
     <script is:inline>
-document.addEventListener("DOMContentLoaded", () => {
-  const html = document.documentElement;
-  const toggle = document.getElementById("theme-toggle");
+        // Define the setup logic in a function to be called on page load and after every swap
+        const setupThemeToggle = () => {
+            const html = document.documentElement;
+            const toggle = document.getElementById("theme-toggle");
 
-  // Load saved theme
-  const saved = localStorage.getItem("theme") || "lofi";
-  html.setAttribute("data-theme", saved);
+            // Check if the toggle exists (it should, as Header is rendered)
+            if (toggle) {
+                // Load saved theme to ensure checkbox state is correct
+                const saved = localStorage.getItem("theme") || "lofi";
+                toggle.checked = saved === "black";
 
-  // Set toggle position
-  toggle.checked = saved === "black";
+                // --- Clean up old listener before adding a new one (CRITICAL for View Transitions) ---
+                const existingListenerName = toggle.getAttribute('data-theme-listener');
+                if (existingListenerName && window[existingListenerName]) {
+                    toggle.removeEventListener('change', window[existingListenerName]);
+                }
 
-  // Toggle handler
-  toggle.addEventListener("change", () => {
-    const newTheme = toggle.checked ? "black" : "lofi";
-    html.setAttribute("data-theme", newTheme);
-    localStorage.setItem("theme", newTheme);
-  });
-});
-</script>
+                // Define the new listener function
+                const listener = () => {
+                    const newTheme = toggle.checked ? "black" : "lofi";
+                    html.setAttribute("data-theme", newTheme);
+                    localStorage.setItem("theme", newTheme);
+                };
 
-      </body>
+                // Attach listener and store reference globally
+                const listenerName = `themeToggleListener_${Date.now()}`;
+                window[listenerName] = listener;
+                toggle.addEventListener("change", listener);
+                toggle.setAttribute('data-theme-listener', listenerName);
+            }
+        };
+
+        // 1. Run the setup logic on initial page load
+        setupThemeToggle();
+
+        // 2. Run the setup logic after every Astro View Transition completes
+        document.addEventListener('astro:after-swap', setupThemeToggle);
+    </script>
+
+  </body>
 </html>
