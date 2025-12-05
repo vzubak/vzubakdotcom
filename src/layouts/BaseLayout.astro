@@ -8,90 +8,86 @@ import { ViewTransitions } from "astro:transitions";
 import { SITE_TITLE, SITE_DESCRIPTION, TRANSITION_API } from "../config";
 
 const {
-  image,
-  title = SITE_TITLE,
-  description = SITE_DESCRIPTION,
-  keywords,
-  includeSidebar = true,
-  sideBarActiveItemID,
-  ogType,
+  image,
+  title = SITE_TITLE,
+  description = SITE_DESCRIPTION,
+  keywords,
+  includeSidebar = true,
+  sideBarActiveItemID,
+  ogType,
 } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en"> 
-  <head>
-    <BaseHead 
-      title={title}
-      description={description}
-      image={image}
-      ogType={ogType}
-      keywords={keywords}
-    />
-    {TRANSITION_API && <ViewTransitions />}
+  <head>
+    <BaseHead 
+      title={title}
+      description={description}
+      image={image}
+      ogType={ogType}
+      keywords={keywords}
+    />
+    {TRANSITION_API && <ViewTransitions />}
 
-        <script is:inline>
-        const html = document.documentElement;
-        
-        // Load saved theme (defaulting to 'lofi')
+    <!-- Apply saved theme immediately to prevent flash -->
+    <script>
+      (function() {
+        const saved = localStorage.getItem("theme");
+        const defaultTheme = saved || "lofi";
+        document.documentElement.setAttribute("data-theme", defaultTheme);
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="bg-base-100 drawer lg:drawer-open">
+      <input id="my-drawer" type="checkbox" class="drawer-toggle" />
+      <div class="drawer-content bg-base-100">
+        <Header title={SITE_TITLE} />
+        <div class="md:flex md:justify-center">
+          <main class="p-6 pt-10 lg:max-w-[900px] max-w-[100vw]">
+            <slot />
+          </main>
+        </div>
+        <Footer />
+      </div>
+      {includeSidebar && <SideBar sideBarActiveItemID={sideBarActiveItemID} />}
+    </div>
+
+    <!-- Theme toggle logic -->
+    <script>
+      const applySavedTheme = () => {
         const saved = localStorage.getItem("theme") || "lofi";
-        html.setAttribute("data-theme", saved);
+        document.documentElement.setAttribute("data-theme", saved);
+
+        // sync all theme toggle checkboxes
+        document.querySelectorAll(".theme-controller").forEach(toggle => {
+          toggle.checked = saved === "black";
+        });
+      };
+
+      const setupToggles = () => {
+        document.querySelectorAll(".theme-controller").forEach(toggle => {
+          toggle.onchange = () => {
+            const newTheme = toggle.checked ? "black" : "lofi";
+            document.documentElement.setAttribute("data-theme", newTheme);
+            localStorage.setItem("theme", newTheme);
+
+            // sync all toggles
+            document.querySelectorAll(".theme-controller").forEach(t => t.checked = toggle.checked);
+          };
+        });
+      };
+
+      // initial setup
+      applySavedTheme();
+      setupToggles();
+
+      // after every Astro View Transition
+      document.addEventListener("astro:after-swap", () => {
+        applySavedTheme();
+        setupToggles();
+      });
     </script>
-  </head>
-  <body>
-    <div class="bg-base-100 drawer lg:drawer-open">
-      <input id="my-drawer" type="checkbox" class="drawer-toggle" />
-      <div class="drawer-content bg-base-100">
-        <Header title={SITE_TITLE} />
-        <div class="md:flex md:justify-center">
-          <main class="p-6 pt-10 lg:max-w-[900px] max-w-[100vw]">
-            <slot />
-          </main>
-        </div>
-        <Footer />
-      </div>
-      {includeSidebar && <SideBar sideBarActiveItemID={sideBarActiveItemID} />}
-    </div>
-
-    <script is:inline>
-        // Define the setup logic in a function to be called on page load and after every swap
-        const setupThemeToggle = () => {
-            const html = document.documentElement;
-            const toggle = document.getElementById("theme-toggle");
-
-            // Check if the toggle exists (it should, as Header is rendered)
-            if (toggle) {
-                // Load saved theme to ensure checkbox state is correct
-                const saved = localStorage.getItem("theme") || "lofi";
-                toggle.checked = saved === "black";
-
-                // --- Clean up old listener before adding a new one (CRITICAL for View Transitions) ---
-                const existingListenerName = toggle.getAttribute('data-theme-listener');
-                if (existingListenerName && window[existingListenerName]) {
-                    toggle.removeEventListener('change', window[existingListenerName]);
-                }
-
-                // Define the new listener function
-                const listener = () => {
-                    const newTheme = toggle.checked ? "black" : "lofi";
-                    html.setAttribute("data-theme", newTheme);
-                    localStorage.setItem("theme", newTheme);
-                };
-
-                // Attach listener and store reference globally
-                const listenerName = `themeToggleListener_${Date.now()}`;
-                window[listenerName] = listener;
-                toggle.addEventListener("change", listener);
-                toggle.setAttribute('data-theme-listener', listenerName);
-            }
-        };
-
-        // 1. Run the setup logic on initial page load
-        setupThemeToggle();
-
-        // 2. Run the setup logic after every Astro View Transition completes
-        document.addEventListener('astro:after-swap', setupThemeToggle);
-    </script>
-
-  </body>
+  </body>
 </html>
