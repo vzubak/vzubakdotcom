@@ -44,42 +44,26 @@ const {
       </div>
       {includeSidebar && <SideBar sideBarActiveItemID={sideBarActiveItemID} />}
     </div>
-    <script>
-  function setTheme(t) {
-    document.documentElement.setAttribute("data-theme", t);
-    localStorage.setItem("theme", t);
-  }
+    <script is:inline>
+document.addEventListener("DOMContentLoaded", () => {
+  const html = document.documentElement;
+  const toggle = document.getElementById("theme-toggle");
 
-  // Load saved theme if exists
-  const saved = localStorage.getItem("theme");
-  if (saved) {
-    document.documentElement.setAttribute("data-theme", saved);
-  }
-</script>
-<script>
-  function updateThemeIcon() {
-    const theme = document.documentElement.getAttribute('data-theme');
-    const icon = document.getElementById('theme-icon');
-    if (!icon) return;
-    icon.textContent = theme === 'lofi' ? "🌞" : "🌙";
-  }
+  // Load saved theme
+  const saved = localStorage.getItem("theme") || "lofi";
+  html.setAttribute("data-theme", saved);
 
-  // Run on load
-  updateThemeIcon();
-</script>
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const btn = document.getElementById("theme-toggle");
-    if (!btn) return;
+  // Set toggle position
+  toggle.checked = saved === "black";
 
-    btn.addEventListener("click", () => {
-      const current = document.documentElement.getAttribute("data-theme") || "lofi";
-      const next = current === "lofi" ? "black" : "lofi";
-      setTheme(next);
-      updateThemeIcon();
-    });
+  // Toggle handler
+  toggle.addEventListener("change", () => {
+    const newTheme = toggle.checked ? "black" : "lofi";
+    html.setAttribute("data-theme", newTheme);
+    localStorage.setItem("theme", newTheme);
   });
+});
 </script>
 
-  </body>
+      </body>
 </html>
