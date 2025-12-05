@@ -12,6 +12,19 @@
     <div class="navbar-center">
       <a class="btn btn-ghost normal-case text-xl" href="/">Valentino Zubak ⚡️</a>
     </div>
-    <div class="navbar-end"></div>
+    <div class="navbar-end">
+    <button
+  class="btn btn-ghost"
+  onclick="
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'lofi' ? 'black' : 'lofi';
+    setTheme(next);
+    updateThemeIcon();
+  "
+>
+  <span id="theme-icon">🌙</span>
+</button>
+
+    </div>
   </div>
 </div>

@@ -44,5 +44,29 @@ const {
       </div>
       {includeSidebar && <SideBar sideBarActiveItemID={sideBarActiveItemID} />}
     </div>
+    <script>
+  function setTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    localStorage.setItem("theme", t);
+  }
+
+  // Load saved theme if exists
+  const saved = localStorage.getItem("theme");
+  if (saved) {
+    document.documentElement.setAttribute("data-theme", saved);
+  }
+</script>
+<script>
+  function updateThemeIcon() {
+    const theme = document.documentElement.getAttribute('data-theme');
+    const icon = document.getElementById('theme-icon');
+    if (!icon) return;
+    icon.textContent = theme === 'lofi' ? "🌞" : "🌙";
+  }
+
+  // Run on load
+  updateThemeIcon();
+</script>
+
   </body>
 </html>
