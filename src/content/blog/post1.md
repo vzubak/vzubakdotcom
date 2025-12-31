@@ -3,7 +3,7 @@ title: "Creating Your Own DNS-Level Ad-Blocker"
 description: "A weekend project that turned my €20 Xiaomi 4A into a silent ad-killing machine"
 pubDate: "Sep 10 2025"
 heroImage: "/images/xiaomi4a openwrt.webp"
-tags: ["adblocker, dns, dnsmasq,"]
+tags: ["adblocker", "dns", "dnsmasq,"]
 ---
 
 I build ads for a living. I love good ads. I keep those relevant, non- intrusive and safe.
